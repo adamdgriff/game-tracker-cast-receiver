@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Game Tracker — Scoreboard</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  background: #0a0a0f;
+  color: #e0e0e0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overflow: hidden;
+}
+#root {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+}
+
+/* ─── Header ─────────────────────────────────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  background: #111118;
+  border-bottom: 1px solid #222;
+  flex-shrink: 0;
+}
+.header .session-name {
+  font-size: 1.4em;
+  font-weight: 700;
+  color: #fff;
+}
+.header .template-name {
+  font-size: 0.85em;
+  color: #888;
+}
+.header .status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.8em;
+  color: #666;
+}
+.header .status .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #4caf50;
+  animation: pulse 2s infinite;
+}
+.header .status .dot.error { background: #f44336; animation: none; }
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ─── Waiting Screen ─────────────────────────────────────────── */
+.waiting {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  color: #888;
+}
+.waiting .icon { font-size: 4em; }
+.waiting .title { font-size: 1.6em; font-weight: 600; color: #ccc; }
+.waiting .subtitle { font-size: 1em; color: #666; }
+.waiting .spinner {
+  width: 40px; height: 40px;
+  border: 3px solid #333;
+  border-top-color: #4caf50;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ─── Player Grid ────────────────────────────────────────────── */
+.players {
+  flex: 1;
+  display: grid;
+  gap: 16px;
+  padding: 24px;
+  align-content: center;
+  justify-content: center;
+}
+.players.p1 { grid-template-columns: 1fr; max-width: 500px; margin: 0 auto; }
+.players.p2 { grid-template-columns: repeat(2, 1fr); }
+.players.p3 { grid-template-columns: repeat(3, 1fr); }
+.players.p4 { grid-template-columns: repeat(2, 1fr); }
+.players.p5, .players.p6 { grid-template-columns: repeat(3, 1fr); }
+.players.p7, .players.p8 { grid-template-columns: repeat(4, 1fr); }
+
+/* ─── Player Card ────────────────────────────────────────────── */
+.player-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  padding: 24px 16px;
+  min-height: 200px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  border: 2px solid rgba(255,255,255,0.1);
+}
+.player-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: inherit;
+  opacity: 0.15;
+  border-radius: inherit;
+}
+.player-card .player-name {
+  font-size: 1.1em;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  opacity: 0.9;
+  position: relative;
+  z-index: 1;
+}
+.player-card .player-value {
+  font-size: 5em;
+  font-weight: 800;
+  line-height: 1;
+  position: relative;
+  z-index: 1;
+  text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  transition: transform 0.2s ease;
+}
+.player-card .player-value.changed {
+  transform: scale(1.08);
+}
+.player-card .player-label {
+  font-size: 0.8em;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  opacity: 0.6;
+  margin-top: 4px;
+  position: relative;
+  z-index: 1;
+}
+.player-card .secondary {
+  display: flex;
+  gap: 12px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+.player-card .secondary .sec-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75em;
+  opacity: 0.7;
+  background: rgba(0,0,0,0.3);
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+.player-card .secondary .sec-value { font-weight: 700; }
+
+/* ─── Responsive ─────────────────────────────────────────────── */
+@media (max-width: 600px) {
+  .players { padding: 12px; gap: 8px; }
+  .player-card { padding: 16px 12px; min-height: 120px; }
+  .player-card .player-value { font-size: 3em; }
+  .player-card .player-name { font-size: 0.9em; }
+  .header { padding: 8px 16px; }
+}
+@media (min-width: 1200px) {
+  .player-card .player-value { font-size: 7em; }
+  .player-card { min-height: 280px; padding: 32px 24px; }
+}
+@media (min-width: 1800px) {
+  .player-card .player-value { font-size: 9em; }
+  .player-card { min-height: 350px; }
+}
+</style>
+</head>
+<body>
+<div id="root">
+  <div class="waiting">
+    <div class="icon">🎲</div>
+    <div class="title">Game Tracker</div>
+    <div class="subtitle">Waiting for scoreboard data...</div>
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<!-- Google Cast Receiver SDK -->
+<script src="//www.gstatic.com/cast/sdk/libs/caf_receiver/v3/cast_receiver_framework.js"></script>
+
+<script>
+/**
+ * Game Tracker Cast Receiver
+ *
+ * Receives scoreboard state from the sender app via a custom Cast message
+ * channel and renders a full-screen scoreboard display.
+ *
+ * Message namespace: urn:x-cast:com.gametracker.scoreboard
+ * Message format: JSON matching the ScoreboardState interface.
+ */
+
+var NAMESPACE = 'urn:x-cast:com.gametracker.scoreboard';
+var previousValues = {};
+
+// ─── Cast Receiver Setup ────────────────────────────────────────
+
+var castContext = cast.framework.CastReceiverContext.getInstance();
+var playerManager = castContext.getPlayerManager();
+
+// Listen for custom messages on our namespace
+castContext.addCustomMessageListener(NAMESPACE, function(event) {
+  try {
+    var data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+    render(data);
+  } catch (err) {
+    console.error('[Receiver] Failed to parse message:', err);
+  }
+});
+
+// Start the receiver
+var options = new cast.framework.CastReceiverOptions();
+options.disableIdleTimeout = true; // Keep receiver alive indefinitely
+castContext.start(options);
+
+// ─── Rendering ──────────────────────────────────────────────────
+
+function render(state) {
+  var root = document.getElementById('root');
+  var count = state.players ? state.players.length : 0;
+
+  if (count === 0) {
+    root.innerHTML =
+      '<div class="waiting">' +
+        '<div class="icon">🎲</div>' +
+        '<div class="title">' + esc(state.sessionName || 'Game Tracker') + '</div>' +
+        '<div class="subtitle">No players yet</div>' +
+      '</div>';
+    return;
+  }
+
+  var gridClass = 'players p' + Math.min(count, 8);
+
+  var html = '<div class="header">'
+    + '<div>'
+    + '<div class="session-name">' + esc(state.sessionName) + '</div>'
+    + (state.templateName ? '<div class="template-name">' + esc(state.templateName) + '</div>' : '')
+    + '</div>'
+    + '<div class="status"><span class="dot"></span><span class="label">Live</span></div>'
+    + '</div>';
+
+  html += '<div class="' + gridClass + '">';
+  for (var i = 0; i < count; i++) {
+    var p = state.players[i];
+    var prevVal = previousValues[p.name];
+    var changed = prevVal !== undefined && prevVal !== p.value;
+    previousValues[p.name] = p.value;
+
+    var textColor = getContrastColor(p.color);
+    var borderColor = adjustBrightness(p.color, 0.6);
+
+    html += '<div class="player-card" style="'
+      + 'background:' + p.color + ';'
+      + 'border-color:' + borderColor + ';'
+      + 'color:' + textColor + ';">'
+      + '<div class="player-name">' + esc(p.name) + '</div>'
+      + '<div class="player-value' + (changed ? ' changed' : '') + '">' + p.value + '</div>'
+      + '<div class="player-label">' + esc(p.label) + '</div>';
+
+    if (p.secondary && p.secondary.length > 0) {
+      html += '<div class="secondary">';
+      for (var j = 0; j < p.secondary.length; j++) {
+        var sec = p.secondary[j];
+        html += '<div class="sec-item">'
+          + '<span class="sec-label">' + esc(sec.label) + ':</span>'
+          + '<span class="sec-value">' + esc(sec.value) + '</span>'
+          + '</div>';
+      }
+      html += '</div>';
+    }
+
+    html += '</div>';
+  }
+  html += '</div>';
+
+  root.innerHTML = html;
+
+  // Remove "changed" animation class after transition
+  if (changed) {
+    setTimeout(function() {
+      var els = document.querySelectorAll('.player-value.changed');
+      for (var k = 0; k < els.length; k++) {
+        els[k].className = 'player-value';
+      }
+    }, 300);
+  }
+}
+
+// ─── Utilities ──────────────────────────────────────────────────
+
+function esc(text) {
+  var d = document.createElement('div');
+  d.appendChild(document.createTextNode(String(text)));
+  return d.innerHTML;
+}
+
+function getContrastColor(hex) {
+  hex = (hex || '#888888').replace('#', '');
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  var r = parseInt(hex.substring(0,2), 16);
+  var g = parseInt(hex.substring(2,4), 16);
+  var b = parseInt(hex.substring(4,6), 16);
+  var luminance = (0.299*r + 0.587*g + 0.114*b) / 255;
+  return luminance > 0.5 ? '#111111' : '#ffffff';
+}
+
+function adjustBrightness(hex, factor) {
+  hex = (hex || '#888888').replace('#', '');
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  var r = Math.min(255, Math.round(parseInt(hex.substring(0,2), 16) * factor));
+  var g = Math.min(255, Math.round(parseInt(hex.substring(2,4), 16) * factor));
+  var b = Math.min(255, Math.round(parseInt(hex.substring(4,6), 16) * factor));
+  return '#' + ((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1);
+}
+</script>
+</body>
+</html>
