@@ -233,6 +233,9 @@ var options = new cast.framework.CastReceiverOptions();
 options.disableIdleTimeout = true; // Keep receiver alive indefinitely
 castContext.start(options);
 
+// Notify the sender that the receiver is ready
+castContext.sendCustomMessage(NAMESPACE, undefined, { type: 'ready' });
+
 // ─── Rendering ──────────────────────────────────────────────────
 
 function render(state) {
